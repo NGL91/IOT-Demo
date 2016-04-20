@@ -6,7 +6,7 @@ import sys
 import re
 import time
 
-sys.path.append('../paho.mqtt.python/src/paho')
+# sys.path.append('../paho.mqtt.python/src/paho')
 import paho.mqtt.client as mqtt
 
 ADDRESS = 'localhost'
