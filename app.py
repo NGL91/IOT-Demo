@@ -7,7 +7,7 @@ import re
 import time
 
 sys.path.append('../paho.mqtt.python/src/paho')
-import mqtt.client as mqtt
+import paho.mqtt.client as mqtt
 
 ADDRESS = 'localhost'
 PORT = 1883
@@ -74,7 +74,7 @@ def on_message_msgs(mosq, obj, msg):
     		mqttc.publish(DEFAULT_TOPIC, publish_data)
 
     		# time.sleep(10)
-    #Co device da submitt toi topic
+    #Device subscribe topic
     elif 'submitted_' in payload:
         regex = r'submitted_([\S]+)'
         data = re.findall(regex, payload)[0]

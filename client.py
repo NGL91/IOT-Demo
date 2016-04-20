@@ -7,8 +7,8 @@ import re
 import time
 import random
 
-sys.path.append('../paho.mqtt.python/src/paho')
-import mqtt.client as mqtt
+# sys.path.append('../paho.mqtt.python/src/paho')
+import paho.mqtt.client as mqtt
 
 ADDRESS = 'localhost'
 PORT = 1883
