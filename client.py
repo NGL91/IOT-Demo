@@ -6,7 +6,7 @@ import sys
 import re
 import time
 import random
-
+from datetime import datetime as datetimep
 # sys.path.append('../paho.mqtt.python/src/paho')
 import paho.mqtt.client as mqtt
 
@@ -23,13 +23,16 @@ DEFAULT_TOPIC = 'SYS/get_topic'
 TOPIC = ''
 
 #List state of device
-list_state = ['on','off']
+list_state = ['ON','OFF']
 
 #Active state of device
-STATE  = 'off'
+STATE  = 'OFF'
 
-client_id = TYPE_DEVICE + "/" + ''.join(random.choice("0123456789ADCDEF") for x in range(23-5))
+STATION = '1'
 
+# client_id = TYPE_DEVICE + "/" + ''.join(random.choice("0123456789ADCDEF") for x in range(23-5))
+
+client_id = TYPE_DEVICE + '/12345678a'
 
 def on_connect(mqttc, obj, flags, rc):
 	print '\n',time.ctime(),' on_connect with obj=',obj,';flags=',flags,';rc=',rc
@@ -42,7 +45,7 @@ def on_publish(mqttc, userdata, mid):
 	print '\n',time.ctime(),' on_publish userdata=',userdata,';mid=',mid
 
 def on_subscribe(client, userdata, mid, granted_qos):
-	print '\n',time.ctime(),' on_subscribe userdata=',userdata,';mid=',mid,';granted_qos=',granted_qos
+	print '\n'+str(datetimep.now())+' on_subscribe userdata=',userdata,';mid=',mid,';granted_qos=',granted_qos
 
 def on_log(client, userdata, level, buf):
     print '\n',time.ctime(),' on_log userdata=',userdata,';level=',level,'buf=',buf
@@ -52,8 +55,8 @@ def on_message_msgs(mosq, obj, msg):
     # This callback will only be called for messages with topics that match topic subscribe
 	print '\n',time.ctime(),' on_message_msgs topic=',msg.topic,';qos=',msg.qos,'payload=',msg.payload
 	payload = msg.payload
-	if 'publish_data_mqtt_client_' in payload:
-		regex = 'publish_data_mqtt_client_([\S]+)_state_([\S]+)'
+	if '_force_change_state_' in payload:
+		regex = 'mqtt_client_id_([\S]+)_force_change_state_([\S]+)'
 		data = re.findall(regex, payload)[0]
 		if data[0] == client_id:
 			rcv_state = data[1]
@@ -70,14 +73,15 @@ def on_message_msgs(mosq, obj, msg):
 				STATE = rcv_state
 			print "\n Change state of device to: ", STATE
 
-	elif 'topic_subcribe_mqtt_client_' in payload:
-		regex = 'topic_subcribe_mqtt_client_([\S]+)_topic_subcribe_([\S]+)'
+	elif '_topic_subcribe_' in payload:
+		regex = 'mqtt_client_id_([\S]+)_topic_subcribe_([\S]+)'
 		data = re.findall(regex, payload)[0]
-		print "\n\n data from topic_subcribe_mqtt_client_ =",data
+		print "\n\n data from _topic_subcribe_ =",data
 		if data[0] == client_id:
 			mqttc.subscribe(data[1], 0)
-			publish_data = 'submitted_' + client_id
-			mqttc.publish(DEFAULT_TOPIC, publish_data)
+
+			publish_data = 'mqtt_client_id_' + client_id + '_subcribed_on_' + data[1]
+			mqttc.publish(data[1], publish_data)
 		else:
 			print "\n\n\n different client Id"
 
@@ -95,8 +99,10 @@ mqttc.subscribe(DEFAULT_TOPIC, 0)
 
 
 # mqttc.message_callback_add(DEFAULT_TOPIC, on_message_msgs)
+# 'mqtt_client_id_([\S]+)_state_([\S]+)_device_type_([\S]+)_station_info_([\S]+)_inititial_connect'
 
-data = 'initial_mqtt_client_type_' + TYPE_DEVICE +'_client_id_' + mqttc._client_id + '_state_' + STATE
+
+data = 'mqtt_client_id_'+mqttc._client_id+'_state_'+STATE+'_device_type_' +TYPE_DEVICE+'_station_info_'+STATION+'_inititial_connect'
 mqttc.publish(DEFAULT_TOPIC, data)
 
 mqttc.loop_forever()
