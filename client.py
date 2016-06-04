@@ -9,7 +9,7 @@ import random
 from datetime import datetime as datetimep
 # sys.path.append('../paho.mqtt.python/src/paho')
 import paho.mqtt.client as mqtt
-
+import paho.mqtt.publish as publish
 # ADDRESS = '222.255.167.8'
 ADDRESS = '127.0.0.1'
 PORT = 1883
@@ -37,7 +37,7 @@ STATION = '1'
 
 # client_id = TYPE_DEVICE + "/" + ''.join(random.choice("0123456789ADCDEF") for x in range(23-5))
 
-client_id = TYPE_DEVICE + '/12345678ab'
+client_id = TYPE_DEVICE + '/123456789abc'
 
 def on_connect(mqttc, obj, flags, rc):
 	print '\n',time.ctime(),' on_connect with obj=',obj,';flags=',flags,';rc=',rc
@@ -56,7 +56,7 @@ def on_log(client, userdata, level, buf):
     print '\n',time.ctime(),' on_log userdata=',userdata,';level=',level,'buf=',buf
 
 def on_message_msgs(mosq, obj, msg):
-	global STATE 
+	global STATE, SUB_TOPIC 
     # This callback will only be called for messages with topics that match topic subscribe
 	print '\n',time.ctime(),' on_message_msgs topic=',msg.topic,';qos=',msg.qos,'payload=',msg.payload
 	payload = msg.payload
@@ -185,7 +185,7 @@ mqttc.subscribe(DEFAULT_TOPIC, 0)
 # 'mqtt_client_id_([\S]+)_state_([\S]+)_device_type_([\S]+)_station_info_([\S]+)_inititial_connect'
 
 
-data = 'mqtt_client_id_'+mqttc._client_id+'_device_type_' +TYPE_DEVICE+'_inititial_connect'
+data = 'mqtt_client_id_'+mqttc._client_id+'_device_type_' +TYPE_DEVICE+'_initial_connect'
 mqttc.publish(DEFAULT_TOPIC, data)
 
 mqttc.loop_forever()
