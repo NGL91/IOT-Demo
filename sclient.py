@@ -10,28 +10,24 @@ from datetime import datetime as datetimep
 # sys.path.append('../paho.mqtt.python/src/paho')
 import paho.mqtt.client as mqtt
 
-# ADDRESS = '222.255.167.8'
-ADDRESS = '127.0.0.1'
+ADDRESS = '222.255.167.8'
+# ADDRESS = '127.0.0.1'
 PORT = 1883
 
 #Type of device
-TYPE_DEVICE = 'relayio'
+TYPE_DEVICE = 'lamp'
 
 #Topic to pusblish info about what device mqtt client stand for
 DEFAULT_TOPIC = 'SYS/get_topic'
-SUB_TOPIC = ''
 
 #Topic will publish info about state of lamp
 TOPIC = ''
 
 #List state of device
-# list_state = ['ON','OFF']
+list_state = ['ON','OFF']
 
 #Active state of device
-SENSOR_STATE  = {1: False, 2: False, 3: False, 4: True, 5: False, 6: True, 7:False, 8:True}
-
-LOCK_STATE  = {1: False, 2: False, 3: False, 4: True, 5: False, 6: True, 7:False, 8:True}
-
+STATE  = 'OFF'
 
 STATION = '1'
 
@@ -78,8 +74,8 @@ def on_message_msgs(mosq, obj, msg):
 				STATE = rcv_state
 			print "\n Change state of device to: ", STATE
 
-	elif '_topic_subscribe_' in payload:
-		regex = 'mqtt_client_id_([\S]+)_topic_subscribe_([\S]+)'
+	elif '_topic_subcribe_' in payload:
+		regex = 'mqtt_client_id_([\S]+)_topic_subcribe_([\S]+)'
 		data = re.findall(regex, payload)[0]
 		print "\n\n data from _topic_subcribe_ =",data
 		if data[0] == client_id:
@@ -87,86 +83,8 @@ def on_message_msgs(mosq, obj, msg):
 
 			publish_data = 'mqtt_client_id_' + client_id + '_subcribed_on_' + data[1]
 			mqttc.publish(data[1], publish_data)
-
-			byte_sensor = get_byte_state(True)
-			publish_data = 'mqtt_client_id_' + client_id + '_station_ALL_sensor_status_' + str(byte_sensor)
-			mqttc.publish(data[1], publish_data)
-
-			byte_lock = get_byte_state(False)
-			publish_data = 'mqtt_client_id_' + client_id + '_station_ALL_lock_status_' + str(byte_lock)
-			mqttc.publish(data[1], publish_data)
-
-			SUB_TOPIC = data[1]
-
 		else:
 			print "\n\n\n different client Id"
-
-	elif '_set_lock_' in payload:
-		regex = 'mqtt_client_id_([\S]+)_station_([\S]+)_set_lock_([\S]+)'
-		data = re.findall(regex, payload)[0]
-		print "\n\n data from _set_lock_ =",data
-		if data[0] == client_id:
-			station = data[1].lower()
-			lock = data[2].lower()
-			lock = True if lock =='on' else False
-
-			if station !='all':
-				LOCK_STATE[int(station)] = lock
-			else:
-				for index in LOCK_STATE:
-					LOCK_STATE[index] = lock
-
-	elif 'get_status' in payload:
-		regex = 'mqtt_client_id_([\S]+)_station_([\S]+)_get_status'
-		data = re.findall(regex, payload)[0]
-		print "\n\n data from get_status =",data
-		if data[0] == client_id:
-			station = data[1].lower()
-
-			
-			publish_data = 'mqtt_client_id_' + client_id 
-			if station == 'all':
-				byte_lock = get_byte_state(False)
-				publish_data += '_station_ALL_sensor_status_' + str(byte_lock)
-			else:
-				lock = 'ON' if SENSOR_STATE[int(station)] else 'OFF'
-				publish_data += '_station_' + station +'_sensor_status_' + lock
-
-			publish.single(SUB_TOPIC, publish_data, hostname=ADDRESS, port=PORT)
-
-	elif 'get_lock' in payload:
-		regex = 'mqtt_client_id_([\S]+)_station_([\S]+)_get_lock'
-		data = re.findall(regex, payload)[0]
-		print "\n\n data from get_lock =",data
-		if data[0] == client_id:
-			station = data[1].lower()
-
-			
-			publish_data = 'mqtt_client_id_' + client_id 
-			if station == 'all':
-				byte_lock = get_byte_state(False)
-				publish_data += '_station_ALL_lock_status_' + str(byte_lock)
-			else:
-				lock = 'ON' if LOCK_STATE[int(station)] else 'OFF'
-				publish_data += '_station_' + station +'_lock_status_' + lock
-
-			publish.single(SUB_TOPIC, publish_data, hostname=ADDRESS, port=PORT)
-
-
-
-def get_byte_state(is_sensor_state=False):
-	res = 0
-	dict = {}
-	if is_sensor_state:
-		dict = SENSOR_STATE
-	else: 
-		dict = LOCK_STATE
-
-	for item in dict:
-		if dict[item]:
-			res += 2**(item-1)
-
-	return res
 
 mqttc = mqtt.Client(client_id=client_id, clean_session=True)
 
@@ -185,7 +103,7 @@ mqttc.subscribe(DEFAULT_TOPIC, 0)
 # 'mqtt_client_id_([\S]+)_state_([\S]+)_device_type_([\S]+)_station_info_([\S]+)_inititial_connect'
 
 
-data = 'mqtt_client_id_'+mqttc._client_id+'_device_type_' +TYPE_DEVICE+'_inititial_connect'
+data = 'mqtt_client_id_'+mqttc._client_id+'_state_'+STATE+'_device_type_' +TYPE_DEVICE+'_station_info_'+STATION+'_inititial_connect'
 mqttc.publish(DEFAULT_TOPIC, data)
 
 mqttc.loop_forever()
